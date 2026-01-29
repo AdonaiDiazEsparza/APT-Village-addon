@@ -1,0 +1,3 @@
+# Ignore backups
+/**/hardware-backups
+/**/fp-info-cache
