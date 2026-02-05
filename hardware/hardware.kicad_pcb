@@ -3720,6 +3720,7 @@
 		(property "Reference" "U1"
 			(at 0 4.2 0)
 			(layer "B.SilkS")
+			(hide yes)
 			(uuid "72d8074a-0569-400e-9ea9-295ba20e952e")
 			(effects
 				(font
@@ -5385,6 +5386,7 @@
 		(property "Reference" "C1"
 			(at 0 1.43 0)
 			(layer "B.SilkS")
+			(hide yes)
 			(uuid "8b15e5cb-7abb-47b3-bb1d-10f77501af5c")
 			(effects
 				(font
@@ -38751,13 +38753,13 @@
 		(uuid "0eb388bc-3fb9-4b84-a731-0b736e2c0ca2")
 	)
 	(via
-		(at 102.91 53.6)
+		(at 120.1 50.5)
 		(size 0.6)
 		(drill 0.3)
 		(layers "F.Cu" "B.Cu")
 		(free yes)
 		(net 5)
-		(uuid "103ebd11-862c-4967-8f03-171ac10c9ce2")
+		(uuid "137b6014-d04c-4df0-9cbb-b2ff594f5d2d")
 	)
 	(via
 		(at 104 44)
@@ -38785,6 +38787,15 @@
 		(free yes)
 		(net 5)
 		(uuid "2e34e911-6c16-4b81-bc44-ea7813e0f87d")
+	)
+	(via
+		(at 106.64 50.43)
+		(size 0.6)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(free yes)
+		(net 5)
+		(uuid "2e74f4cb-4237-4cab-8497-d7e5987324cc")
 	)
 	(via
 		(at 97 66.5)
@@ -38904,7 +38915,7 @@
 		(uuid "e58e74e4-f49d-4547-b967-446045461fe3")
 	)
 	(via
-		(at 113.55 60.98)
+		(at 114.52 60.96)
 		(size 0.6)
 		(drill 0.3)
 		(layers "F.Cu" "B.Cu")
