@@ -1,5 +1,67 @@
 #include "main.h"
 
+/**
+ * Define the structs for the leds
+ */
+led_t led_1 = {
+    .led = LED_1,
+    .pwm = 0
+};
+
+led_t led_2 = {
+    .led = LED_2,
+    .pwm = 0
+};
+
+led_t led_3 = {
+    .led = LED_3,
+    .pwm = 0
+};
+
+led_t led_4 = {
+    .led = LED_4,
+    .pwm = 0
+};
+
+led_t led_5 = {
+    .led = LED_5,
+    .pwm = 0
+};
+
+led_t led_6 = {
+    .led = LED_6,
+    .pwm = 0
+}; 
+
+led_t led_7 = {
+    .led = LED_7,
+    .pwm = 0
+}; 
+
+led_t led_8 = {
+    .led = LED_8,
+    .pwm = 0
+}; 
+
+
+led_t led_nose = {
+    .led = NOSE,
+    .pwm = 0
+}; 
+
+
+led_t led_right = {
+    .led = RIGHT_EYE,
+    .pwm = 0
+}; 
+
+led_t led_left = {
+    .led = LEFT_EYE,
+    .pwm = 0
+}; 
+
+// ====================================== HANDLE FOR INTERRUPTS ============
+
 // Defines for the systick
 #define millis() (systick_millis)
 #define micros() (SysTick->CNT / DELAY_US_TIME)
@@ -9,13 +71,6 @@ volatile uint32_t systick_millis;
 // Counter
 volatile uint16_t counter = 0;
 
-// PWM PERIOD
-#define PWM_PERIOD 100
-#define PWM_DUTY   20  
-
-// counter for pwm
-volatile uint16_t pwm_counter = 0;
-
 // Timer Interrupt
 void TIM1_UP_IRQHandler(void) __attribute__((interrupt));
 void TIM1_UP_IRQHandler(void)
@@ -24,12 +79,12 @@ void TIM1_UP_IRQHandler(void)
     {
         TIM1->INTFR &= ~TIM_FLAG_Update;
 
-        pwm_counter++;
+        counter++;
 
-        if (pwm_counter >= PWM_PERIOD)
-            pwm_counter = 0;
+        if (counter >= 1000)
+            counter = 0;
 
-        if (pwm_counter < PWM_DUTY)
+        if (counter < 500)
             funDigitalWrite(LED_3, 0);
         else
             funDigitalWrite(LED_3, 1);
@@ -60,7 +115,7 @@ void timer_init(void)
     TIM1->PSC = 47;
 
     // 1MHz / 1000 = 1kHz (1ms)
-    TIM1->ATRLR = 100 - 1;
+    TIM1->ATRLR = 10 - 1;
 
     TIM1->SWEVGR = TIM_PSCReloadMode_Update;
 
@@ -89,6 +144,23 @@ void systick_init(void)
 	NVIC_EnableIRQ(SysTick_IRQn);
 }
 
+/**
+ * Init all the leds
+ */
+void InitLeds(void){
+    INIT_LED(LED_1);
+    INIT_LED(LED_2);
+    INIT_LED(LED_3);
+    INIT_LED(LED_4);
+    INIT_LED(LED_5);
+    INIT_LED(LED_6);
+    INIT_LED(LED_7);
+    INIT_LED(LED_8);
+
+    INIT_LED(RIGHT_EYE);
+    INIT_LED(LEFT_EYE);
+    INIT_LED(NOSE);
+}
 
 /**
  * Function to init all
@@ -96,13 +168,14 @@ void systick_init(void)
 void InitAddon()
 {
 	SystemInit(); // Init system
+
     funGpioInitAll(); // Init all gpio
 
 	timer_init(); // Start timer
 
-    // Initialize leds
-    INIT_LED(LED_3);
+    systick_init(); // Init the systick system
 
+    InitLeds(); // Iniciar todos los leds
 }
 
 /**

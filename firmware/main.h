@@ -15,4 +15,12 @@
 #define LED_7       PC1
 #define LED_8       PC2
 
+// Init leds
 #define INIT_LED(led) funPinMode(led, GPIO_Speed_10MHz | GPIO_CNF_OUT_PP);
+
+// Struct to control the pwm led
+typedef struct {
+    uint8_t led;
+    uint8_t pwm;
+} led_t;
+
