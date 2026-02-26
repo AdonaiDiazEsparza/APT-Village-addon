@@ -21,6 +21,6 @@
 // Struct to control the pwm led
 typedef struct {
     uint8_t led;
-    uint8_t pwm;
+    volatile uint16_t pwm;
 } led_t;
 

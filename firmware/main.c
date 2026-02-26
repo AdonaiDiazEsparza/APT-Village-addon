@@ -84,10 +84,14 @@ void TIM1_UP_IRQHandler(void)
         if (counter >= 1000)
             counter = 0;
 
-        if (counter < 500)
-            funDigitalWrite(LED_3, 0);
-        else
-            funDigitalWrite(LED_3, 1);
+        funDigitalWrite(led_1.led, counter<=led_1.pwm);
+        funDigitalWrite(led_2.led, counter<=led_2.pwm);
+        funDigitalWrite(led_3.led, counter<=led_3.pwm);
+        funDigitalWrite(led_4.led, counter<=led_4.pwm);
+        funDigitalWrite(led_5.led, counter<=led_5.pwm);
+        funDigitalWrite(led_6.led, counter<=led_6.pwm);
+        funDigitalWrite(led_7.led, counter<=led_7.pwm);
+        funDigitalWrite(led_8.led, counter<=led_8.pwm);
     }
 }
 
@@ -186,7 +190,27 @@ int main()
 
 	InitAddon(); // Init All functions
 
+    int8_t sum = 1;
+
+    uint32_t last_time = millis();
+
 	while(1)
 	{
+        if(millis() - last_time > 10){
+            led_1.pwm+=sum;
+            led_2.pwm+=sum;
+            led_3.pwm+=sum;
+            led_4.pwm+=sum;
+            led_5.pwm+=sum;
+            led_6.pwm+=sum;
+            led_7.pwm+=sum;
+            led_8.pwm+=sum;
+
+            if(led_1.pwm == 0) sum = 1;
+
+            if(led_1.pwm > 999) sum = -1;
+
+            last_time = millis();
+        }
 	}
 }
