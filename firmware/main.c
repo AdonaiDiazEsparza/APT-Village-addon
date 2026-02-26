@@ -105,6 +105,17 @@ void SysTick_Handler(void)
 }
 
 /**
+ * Delay functions
+ */
+
+void delay_ms(uint32_t time)
+{
+    uint32_t last_time = millis();
+
+    while(millis() - last_time < time);
+}
+
+/**
  * Init the Timer
  */
 void timer_init(void)
