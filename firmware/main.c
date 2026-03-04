@@ -214,63 +214,9 @@ void all_off(){
 }
 
 /**
- * Set all
- */
-void set_all(uint16_t pwm){
-
-    if(pwm > 1000) return;
-
-    led_1.pwm = pwm;
-    led_2.pwm = pwm;
-    led_3.pwm = pwm;
-    led_4.pwm = pwm;
-    led_5.pwm = pwm;
-    led_6.pwm = pwm;
-    led_7.pwm = pwm;
-    led_8.pwm = pwm;
-    led_nose.pwm = pwm;
-    led_left.pwm = pwm;
-    led_right.pwm = pwm;
-}
-
-/**
- * First Sequence
- */
-
-void eyes_sequence()
-{
-    for(uint8_t i = 0; i<7 ; i++){
-
-        uint32_t last_time = millis();
-
-        while(led_nose.pwm < 1000)
-        {
-            if(millis() - last_time > 5){
-                led_nose.pwm+=10;
-
-                led_nose.pwm = led_nose.pwm > 1000 ? 1000 : led_nose.pwm; 
-                last_time = millis();
-            }
-        }
-
-        last_time = millis();
-
-        while(led_nose.pwm > 0){
-            
-            if(millis() - last_time > 5){
-                led_nose.pwm-=10;
-                last_time = millis();
-            }
-        }
-    }
-    
-    all_off();
-}
-
-/**
  *  Squence
  */
-void foot()
+void sequence()
 {
     led_t* leds_right[] = {&led_4, &led_6, &led_5};
     led_t* leds_left[] = {&led_3, &led_7, &led_8};
@@ -537,13 +483,10 @@ int main()
 
 	InitAddon(); // Init All functions
 
-    // all_off();
-
     delay_ms(100);
 
 	while(1)
 	{
-        // eyes_sequence();
-        foot();
+        sequence();
 	}
 }
