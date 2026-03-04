@@ -1,10 +1,11 @@
 # APT-Villa-addon
 Repositorio de los recursos del Addon para el APT Village. Este es un pequeño recuerdo que se les da a las personas que participen en alguno de nuestras platicas.
 
+<center>
+
 <img src=images/Top.jpg width=25%>
-
 <img src=images/back.jpg width=25%>
-
+</center>
 ## Hardware
 - La iluminación consta de 11 Leds (6 de color rojo, 2 de color blanco y 3 traseros de color rojo).
 - El chip progragramable es un CH32v003F4P6
