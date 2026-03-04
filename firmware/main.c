@@ -84,14 +84,14 @@ void TIM1_UP_IRQHandler(void)
         if (counter >= 1000)
             counter = 0;
 
-        funDigitalWrite(led_1.led, counter<=led_1.pwm);
-        funDigitalWrite(led_2.led, counter<=led_2.pwm);
-        funDigitalWrite(led_3.led, counter<=led_3.pwm);
-        funDigitalWrite(led_4.led, counter<=led_4.pwm);
-        funDigitalWrite(led_5.led, counter<=led_5.pwm);
-        funDigitalWrite(led_6.led, counter<=led_6.pwm);
-        funDigitalWrite(led_7.led, counter<=led_7.pwm);
-        funDigitalWrite(led_8.led, counter<=led_8.pwm);
+        funDigitalWrite(led_1.led, counter<led_1.pwm);
+        funDigitalWrite(led_2.led, counter<led_2.pwm);
+        funDigitalWrite(led_3.led, counter<led_3.pwm);
+        funDigitalWrite(led_4.led, counter<led_4.pwm);
+        funDigitalWrite(led_5.led, counter<led_5.pwm);
+        funDigitalWrite(led_6.led, counter<led_6.pwm);
+        funDigitalWrite(led_7.led, counter<led_7.pwm);
+        funDigitalWrite(led_8.led, counter<led_8.pwm);
     }
 }
 
@@ -194,6 +194,63 @@ void InitAddon()
 }
 
 /**
+ * All leds turn off
+ */
+void all_off(){
+    led_1.pwm = 0;
+    led_2.pwm = 0;
+    led_3.pwm = 0;
+    led_4.pwm = 0;
+    led_5.pwm = 0;
+    led_6.pwm = 0;
+    led_7.pwm = 0;
+    led_8.pwm = 0;
+    led_nose.pwm = 0;
+    led_left.pwm = 0;
+    led_right.pwm = 0;
+}
+
+/**
+ * First Sequence
+ */
+
+void eye_sequence()
+{
+    for(uint8_t i = 0; i<10 ; i++){
+
+        uint32_t last_time = millis();
+
+        while(led_1.pwm < 1000 && led_2.pwm < 1000)
+        {
+            if(millis() - last_time > 25){
+                led_1.pwm+=20;
+                led_2.pwm+=20;
+
+                led_1.pwm = led_1.pwm > 1000 ? 1000 : led_1.pwm; 
+                led_2.pwm = led_2.pwm > 1000 ? 1000 : led_2.pwm; 
+                last_time = millis();
+            }
+        }
+
+        last_time = millis();
+
+        while(led_1.pwm > 0 && led_2.pwm > 0){
+            
+            if(millis() - last_time > 25){
+                led_1.pwm-=20;
+                led_2.pwm-=20;
+
+                last_time = millis();
+            }
+        }
+    }
+    
+    led_1.pwm = 0;
+    led_2.pwm = 0;
+
+}
+
+/**
  * Main Function
  */
 int main()
@@ -201,27 +258,12 @@ int main()
 
 	InitAddon(); // Init All functions
 
-    int8_t sum = 1;
+    all_off();
 
-    uint32_t last_time = millis();
+    delay_ms(100);
 
 	while(1)
 	{
-        if(millis() - last_time > 10){
-            led_1.pwm+=sum;
-            led_2.pwm+=sum;
-            led_3.pwm+=sum;
-            led_4.pwm+=sum;
-            led_5.pwm+=sum;
-            led_6.pwm+=sum;
-            led_7.pwm+=sum;
-            led_8.pwm+=sum;
-
-            if(led_1.pwm == 0) sum = 1;
-
-            if(led_1.pwm > 999) sum = -1;
-
-            last_time = millis();
-        }
+        eye_sequence();
 	}
 }
