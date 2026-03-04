@@ -85,13 +85,16 @@ void TIM1_UP_IRQHandler(void)
             counter = 0;
 
         funDigitalWrite(led_1.led, counter<led_1.pwm);
-        funDigitalWrite(led_2.led, counter<led_2.pwm);
+        funDigitalWrite(led_2.led, counter<led_1.pwm);
         funDigitalWrite(led_3.led, counter<led_3.pwm);
         funDigitalWrite(led_4.led, counter<led_4.pwm);
         funDigitalWrite(led_5.led, counter<led_5.pwm);
         funDigitalWrite(led_6.led, counter<led_6.pwm);
         funDigitalWrite(led_7.led, counter<led_7.pwm);
         funDigitalWrite(led_8.led, counter<led_8.pwm);
+        funDigitalWrite(led_left.led, counter<led_nose.pwm);
+        funDigitalWrite(led_right.led, counter<led_nose.pwm);
+        funDigitalWrite(led_nose.led, counter<led_nose.pwm);
     }
 }
 
@@ -211,43 +214,103 @@ void all_off(){
 }
 
 /**
+ * Set all
+ */
+void set_all(uint16_t pwm){
+
+    if(pwm > 1000) return;
+
+    led_1.pwm = pwm;
+    led_2.pwm = pwm;
+    led_3.pwm = pwm;
+    led_4.pwm = pwm;
+    led_5.pwm = pwm;
+    led_6.pwm = pwm;
+    led_7.pwm = pwm;
+    led_8.pwm = pwm;
+    led_nose.pwm = pwm;
+    led_left.pwm = pwm;
+    led_right.pwm = pwm;
+}
+
+/**
  * First Sequence
  */
 
-void eye_sequence()
+void eyes_sequence()
 {
-    for(uint8_t i = 0; i<10 ; i++){
+    for(uint8_t i = 0; i<7 ; i++){
 
         uint32_t last_time = millis();
 
-        while(led_1.pwm < 1000 && led_2.pwm < 1000)
+        while(led_nose.pwm < 1000)
         {
-            if(millis() - last_time > 25){
-                led_1.pwm+=20;
-                led_2.pwm+=20;
+            if(millis() - last_time > 5){
+                led_nose.pwm+=10;
 
-                led_1.pwm = led_1.pwm > 1000 ? 1000 : led_1.pwm; 
-                led_2.pwm = led_2.pwm > 1000 ? 1000 : led_2.pwm; 
+                led_nose.pwm = led_nose.pwm > 1000 ? 1000 : led_nose.pwm; 
                 last_time = millis();
             }
         }
 
         last_time = millis();
 
-        while(led_1.pwm > 0 && led_2.pwm > 0){
+        while(led_nose.pwm > 0){
             
-            if(millis() - last_time > 25){
-                led_1.pwm-=20;
-                led_2.pwm-=20;
-
+            if(millis() - last_time > 5){
+                led_nose.pwm-=10;
                 last_time = millis();
             }
         }
     }
     
-    led_1.pwm = 0;
-    led_2.pwm = 0;
+    all_off();
+}
 
+/**
+ *  
+ */
+void foot()
+{
+    led_t* leds_right[] = {&led_4, &led_6, &led_5};
+    led_t* leds_left[] = {&led_3, &led_7, &led_8};
+
+    uint8_t pivot = 0;
+    int8_t direction = 1;
+
+    uint32_t last_time_eyes = millis() ,last_time_feet = millis(); 
+
+    leds_left[0]->pwm = 1000;
+    leds_right[0]->pwm = 1000;
+
+    while(led_1.pwm < 1000)
+    {
+        uint32_t current_time = millis();
+
+        if(current_time - last_time_eyes > 25 ){
+            led_1.pwm += 5;
+            last_time_eyes = current_time;
+        }
+
+        if(current_time - last_time_feet > 150 ){
+
+            for(uint8_t i = 0; i<3; i++){
+                leds_left[i]->pwm = 0;
+                leds_right[i]->pwm = 0;
+            }
+
+            pivot+=direction;
+
+            leds_left[pivot]->pwm = 1000;
+            leds_right[pivot]->pwm = 1000;
+
+            if(pivot == 0) direction = 1;
+            if(pivot == 2) direction = -1;
+
+            last_time_feet = current_time;
+        }
+    }
+    all_off();
 }
 
 /**
@@ -258,12 +321,13 @@ int main()
 
 	InitAddon(); // Init All functions
 
-    all_off();
+    // all_off();
 
     delay_ms(100);
 
 	while(1)
 	{
-        eye_sequence();
+        eyes_sequence();
+        foot();
 	}
 }
