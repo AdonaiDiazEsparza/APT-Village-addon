@@ -5,6 +5,7 @@ Repositorio de los recursos del Addon para el APT Village. Este es un pequeño r
   <img src=images/Top.jpg width=50%>
   <img src=images/back.jpg width=50%>
 </p>
+
 ## Hardware
 
 - La iluminación consta de 11 Leds (6 de color rojo, 2 de color blanco y 3 traseros de color rojo).
