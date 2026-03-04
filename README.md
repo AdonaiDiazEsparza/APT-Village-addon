@@ -6,14 +6,18 @@ Repositorio de los recursos del Addon para el APT Village. Este es un pequeño r
   <img src=images/back.jpg width=50%>
 </p>
 ## Hardware
+
 - La iluminación consta de 11 Leds (6 de color rojo, 2 de color blanco y 3 traseros de color rojo).
 - El chip progragramable es un CH32v003F4P6
 
 ## Firmware
+
 ### Programación
+
 Para poder programar el chip es necesario utilizar un programador especializado, nosotros recomendamos el programador de WCH-link, pero puede funcionar otro programador que tenga soporte para chips CH32 o para arquitectura RISC-V
 
 ### Compilación
+
 Para compilar el firmware del chip usa el comando ```make build``` para generar los archivos ```.bin``` y ```.hex```. 
 Es necesario instalar los paquetes necesarios:
 
