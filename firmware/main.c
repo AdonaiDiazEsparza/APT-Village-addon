@@ -268,7 +268,7 @@ void eyes_sequence()
 }
 
 /**
- *  
+ *  Squence
  */
 void foot()
 {
@@ -276,19 +276,58 @@ void foot()
     led_t* leds_left[] = {&led_3, &led_7, &led_8};
 
     uint8_t pivot = 0;
-    int8_t direction = 1;
+    int8_t direction = 1, pivot_nose_eyes = 0;
 
-    uint32_t last_time_eyes = millis() ,last_time_feet = millis(); 
+    uint32_t last_time_eyes = millis() ,last_time_feet = millis(), last_time_nose = millis(), last_time_light_feet = millis(); 
 
     leds_left[0]->pwm = 1000;
     leds_right[0]->pwm = 1000;
 
-    while(led_1.pwm < 1000)
+    uint16_t value_foot = 0;
+
+    all_off();
+
+    // ======================== At this point the leds around need to start growing thier values ======================
+
+    last_time_light_feet = millis();
+
+    while(value_foot < 200){
+        uint32_t current_time = millis();
+
+        if(current_time - last_time_light_feet > 100){
+            value_foot += 5;
+            last_time_light_feet = current_time;
+        }
+
+        if(current_time - last_time_feet > 150 ){
+
+            for(uint8_t i = 0; i<3; i++){
+                leds_left[i]->pwm = 0;
+                leds_right[i]->pwm = 0;
+            }
+
+            pivot+=direction;
+
+            leds_left[pivot]->pwm = value_foot;
+            leds_right[pivot]->pwm = value_foot;
+
+            if(pivot == 0) direction = 1;
+            if(pivot == 2) direction = -1;
+
+            last_time_feet = current_time;
+        }
+    }
+
+    // ======================== Start growing the values of the eyes on the spider ======================
+
+    last_time_eyes = millis();
+
+    while(led_1.pwm < 500)
     {
         uint32_t current_time = millis();
 
-        if(current_time - last_time_eyes > 25 ){
-            led_1.pwm += 5;
+        if(current_time - last_time_eyes > 50 ){
+            led_1.pwm += 10;
             last_time_eyes = current_time;
         }
 
@@ -301,8 +340,8 @@ void foot()
 
             pivot+=direction;
 
-            leds_left[pivot]->pwm = 1000;
-            leds_right[pivot]->pwm = 1000;
+            leds_left[pivot]->pwm = value_foot;
+            leds_right[pivot]->pwm = value_foot;
 
             if(pivot == 0) direction = 1;
             if(pivot == 2) direction = -1;
@@ -310,7 +349,184 @@ void foot()
             last_time_feet = current_time;
         }
     }
-    all_off();
+
+    // ======================== Start iluminating the eyes and nose for the skull ======================
+    
+    last_time_nose = millis();
+
+    while(led_nose.pwm < 1000)
+    {
+        uint32_t current_time = millis();
+
+        if(current_time - last_time_nose > 25 ){
+            led_nose.pwm += 10;
+            last_time_nose = current_time;
+        }
+
+        if(current_time - last_time_feet > 150 ){
+
+            for(uint8_t i = 0; i<3; i++){
+                leds_left[i]->pwm = 0;
+                leds_right[i]->pwm = 0;
+            }
+
+            pivot+=direction;
+
+            leds_left[pivot]->pwm = value_foot;
+            leds_right[pivot]->pwm = value_foot;
+
+            if(pivot == 0) direction = 1;
+            if(pivot == 2) direction = -1;
+
+            last_time_feet = current_time;
+        }
+    }
+
+    // ======================== A time fade in out ======================
+
+    last_time_eyes = millis();
+
+    while(true){
+        if(led_nose.pwm == 1000) pivot_nose_eyes = -20;
+        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
+
+        uint32_t current_time = millis();
+
+        if(current_time - last_time_nose > 10){
+            led_nose.pwm += pivot_nose_eyes;
+            last_time_nose = current_time;
+        }
+
+        if(current_time - last_time_feet > 150 ){
+
+            for(uint8_t i = 0; i<3; i++){
+                leds_left[i]->pwm = 0;
+                leds_right[i]->pwm = 0;
+            }
+
+            pivot+=direction;
+
+            leds_left[pivot]->pwm = value_foot;
+            leds_right[pivot]->pwm = value_foot;
+
+            if(pivot == 0) direction = 1;
+            if(pivot == 2) direction = -1;
+
+            last_time_feet = current_time;
+        }
+
+        if(current_time - last_time_eyes > 20000){
+            break;
+        }
+    }
+
+    // ======================== Start going down the eyes of the spider ======================
+
+    last_time_light_feet = millis();
+
+    while(value_foot != 0){
+        uint32_t current_time = millis();
+
+        if(led_nose.pwm == 1000) pivot_nose_eyes = -20;
+        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
+
+        if(current_time - last_time_light_feet > 100){
+            value_foot -= 5;
+            last_time_light_feet = current_time;
+        }
+
+        if(current_time - last_time_feet > 150 ){
+
+            for(uint8_t i = 0; i<3; i++){
+                leds_left[i]->pwm = 0;
+                leds_right[i]->pwm = 0;
+            }
+
+            pivot+=direction;
+
+            leds_left[pivot]->pwm = value_foot;
+            leds_right[pivot]->pwm = value_foot;
+
+            if(pivot == 0) direction = 1;
+            if(pivot == 2) direction = -1;
+
+            last_time_feet = current_time;
+        }
+    
+        if(current_time - last_time_nose > 10){
+            led_nose.pwm += pivot_nose_eyes;
+            last_time_nose = current_time;
+        }
+    }
+
+    leds_left[pivot]->pwm = value_foot;
+    leds_right[pivot]->pwm = value_foot;
+
+    // ======================== start turning off the lights ======================
+
+    last_time_eyes = millis();
+
+    while (led_1.pwm != 0)
+    {
+        uint32_t current_time = millis();
+
+        if(led_nose.pwm == 1000) pivot_nose_eyes = -20;
+        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
+        
+        if(current_time - last_time_eyes > 50){
+            led_1.pwm -= 25;
+            last_time_eyes = current_time;
+        }
+
+        if(current_time - last_time_nose > 10){
+            led_nose.pwm += pivot_nose_eyes;
+            last_time_nose = current_time;
+        }
+    }
+    
+    // ======================== play a little with the eyes and the nose ======================
+
+    last_time_eyes = millis();
+
+    while(true){
+        if(led_nose.pwm == 1000) pivot_nose_eyes = -20;
+        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
+
+        uint32_t current_time = millis();
+
+        if(current_time - last_time_nose > 10){
+            led_nose.pwm += pivot_nose_eyes;
+            last_time_nose = current_time;
+        }
+
+        if(current_time - last_time_eyes > 5000){
+            break;
+        }
+    }
+
+    while(led_nose.pwm < 1000){
+        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
+
+        uint32_t current_time = millis();
+
+        if(current_time - last_time_nose > 10){
+            led_nose.pwm += pivot_nose_eyes;
+            last_time_nose = current_time;
+        }
+    }
+
+    // ========================== fade down =================================================
+
+    while(led_nose.pwm != 0){
+        uint32_t current_time = millis();
+
+        if(current_time - last_time_nose > 100){
+            led_nose.pwm -= 20;
+            last_time_nose = current_time;
+        }
+    }
+    
+    delay_ms(1000);
 }
 
 /**
@@ -327,7 +543,7 @@ int main()
 
 	while(1)
 	{
-        eyes_sequence();
+        // eyes_sequence();
         foot();
 	}
 }
