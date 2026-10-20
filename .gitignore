@@ -6,3 +6,5 @@
 *.map
 *.lst
 *.elf
+*.zip
+/hardware/FabOuts/*
