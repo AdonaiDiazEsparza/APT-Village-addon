@@ -3392,6 +3392,17 @@
 				)
 			)
 		)
+		(property "LCSC#" "C964833"
+			(at 165.1 69.85 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "38795d8f-051a-414b-99d9-2c29facab78a")
 		)
@@ -4142,7 +4153,7 @@
 				)
 			)
 		)
-		(property "LCSC#" "C20613596"
+		(property "LCSC#" "C917191"
 			(at 26.67 33.02 0)
 			(hide yes)
 			(show_name no)
@@ -4323,7 +4334,7 @@
 				)
 			)
 		)
-		(property "LCSC#" "C20613596"
+		(property "LCSC#" "C917191"
 			(at 26.67 44.45 0)
 			(hide yes)
 			(show_name no)
