@@ -2,21 +2,19 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define RIGHT_EYE   PA1
-#define LEFT_EYE    PD0
-#define NOSE        PA2
-
-#define LED_1       PD4
-#define LED_2       PD5
-#define LED_3       PD2
-#define LED_4       PD3
-#define LED_5       PC0
-#define LED_6       PD6
-#define LED_7       PC1
-#define LED_8       PC2
+#define LED_1       PD7     // Led eye left
+#define LED_2       PA1     // Led eye right
+#define LED_3       PD6     // Upper left
+#define LED_4       PC0     // Upper right
+#define LED_5       PD5     // Middle left
+#define LED_6       PC7     // Middle right
+#define LED_7       PD4     // Lower left
+#define LED_8       PD2     // Lower right
 
 // Init leds
 #define INIT_LED(led) funPinMode(led, GPIO_Speed_10MHz | GPIO_CNF_OUT_PP);
+
+#define LEDS_COUNT 8
 
 // Struct to control the pwm led
 typedef struct {
@@ -24,3 +22,9 @@ typedef struct {
     volatile uint16_t pwm;
 } led_t;
 
+
+// Set off
+#define SET_OFF(led) led.pwm = 0;
+
+// Set on
+#define SET_ON(led) led.pwm = 100;

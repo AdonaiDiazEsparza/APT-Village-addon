@@ -43,23 +43,6 @@ led_t led_8 = {
     .pwm = 0
 }; 
 
-
-led_t led_nose = {
-    .led = NOSE,
-    .pwm = 0
-}; 
-
-
-led_t led_right = {
-    .led = RIGHT_EYE,
-    .pwm = 0
-}; 
-
-led_t led_left = {
-    .led = LEFT_EYE,
-    .pwm = 0
-}; 
-
 // ====================================== HANDLE FOR INTERRUPTS ============
 
 // Defines for the systick
@@ -92,9 +75,6 @@ void TIM1_UP_IRQHandler(void)
         funDigitalWrite(led_6.led, counter<led_6.pwm);
         funDigitalWrite(led_7.led, counter<led_7.pwm);
         funDigitalWrite(led_8.led, counter<led_8.pwm);
-        funDigitalWrite(led_left.led, counter<led_nose.pwm);
-        funDigitalWrite(led_right.led, counter<led_nose.pwm);
-        funDigitalWrite(led_nose.led, counter<led_nose.pwm);
     }
 }
 
@@ -163,6 +143,103 @@ void systick_init(void)
 }
 
 /**
+ * Wait until flash operation finishes (or timeout)
+ */
+static int flash_wait(uint32_t timeout)
+{
+	while ((FLASH->STATR & FLASH_FLAG_BSY) && timeout)
+		timeout--;
+
+	if (!timeout)
+		return FLASH_TIMEOUT;
+
+	if (FLASH->STATR & FLASH_FLAG_WRPRTERR)
+		return FLASH_ERROR_WRP;
+
+	return FLASH_COMPLETE;
+}
+
+/**
+ * Unlock flash + option bytes
+ */
+static void flash_unlock(void)
+{
+	FLASH->KEYR = FLASH_KEY1;
+	FLASH->KEYR = FLASH_KEY2;
+	FLASH->OBKEYR = FLASH_KEY1;
+	FLASH->OBKEYR = FLASH_KEY2;
+	FLASH->MODEKEYR = FLASH_KEY1;
+	FLASH->MODEKEYR = FLASH_KEY2;
+}
+
+/**
+ * Deactivate NRST on PD7 so it can be used as GPIO (LED_1).
+ * Writes option bytes once; skips if already disabled.
+ */
+void deactivate_nrst(void)
+{
+	// RST_MODE == 11b (OB_RST_NoEN) already set?
+	if ((FLASH->OBR & FLASH_OBR_RST_MODE) == FLASH_OBR_RST_MODE)
+		return;
+
+	flash_unlock();
+
+	int status = flash_wait(EraseTimeout);
+	if (status != FLASH_COMPLETE)
+		return;
+
+	// Erase option bytes (must rewrite RDPR afterwards) 
+	FLASH->OBKEYR = FLASH_KEY1;
+	FLASH->OBKEYR = FLASH_KEY2;
+	FLASH->CTLR |= CR_OPTER_Set;
+	FLASH->CTLR |= CR_STRT_Set;
+	status = flash_wait(EraseTimeout);
+
+	if (status != FLASH_COMPLETE)
+	{
+		if (status != FLASH_TIMEOUT)
+			FLASH->CTLR &= CR_OPTER_Reset;
+		return;
+	}
+
+	FLASH->CTLR &= CR_OPTER_Reset;
+	FLASH->CTLR |= CR_OPTPG_Set;
+	OB->RDPR = RDP_Key;
+	status = flash_wait(ProgramTimeout);
+
+	if (status == FLASH_TIMEOUT)
+		return;
+
+	FLASH->CTLR &= CR_OPTPG_Reset;
+
+	// USER: SW IWDG, no STOP/STDBY reset, NRST disabled, boot from user code 
+	const uint16_t user =
+		OB_IWDG_SW |
+		OB_STOP_NoRST |
+		OB_STDBY_NoRST |
+		OB_RST_NoEN |
+		OB_STARTMODE_USER |
+		0xC0; /* reserved bits must stay 1 */
+
+	FLASH->OBKEYR = FLASH_KEY1;
+	FLASH->OBKEYR = FLASH_KEY2;
+	status = flash_wait(ProgramTimeout);
+
+	if (status != FLASH_COMPLETE)
+		return;
+
+	FLASH->CTLR |= CR_OPTPG_Set;
+	OB->USER = user;
+	status = flash_wait(ProgramTimeout);
+
+	if (status != FLASH_TIMEOUT)
+		FLASH->CTLR &= CR_OPTPG_Reset;
+
+	// Option bytes apply after reset 
+	NVIC_SystemReset();
+}
+
+/**
  * Init all the leds
  */
 void InitLeds(void){
@@ -174,10 +251,6 @@ void InitLeds(void){
     INIT_LED(LED_6);
     INIT_LED(LED_7);
     INIT_LED(LED_8);
-
-    INIT_LED(RIGHT_EYE);
-    INIT_LED(LEFT_EYE);
-    INIT_LED(NOSE);
 }
 
 /**
@@ -186,6 +259,8 @@ void InitLeds(void){
 void InitAddon()
 {
 	SystemInit(); // Init system
+
+	deactivate_nrst(); // PD7 as GPIO (not NRST)
 
     funGpioInitAll(); // Init all gpio
 
@@ -200,17 +275,14 @@ void InitAddon()
  * All leds turn off
  */
 void all_off(){
-    led_1.pwm = 0;
-    led_2.pwm = 0;
-    led_3.pwm = 0;
-    led_4.pwm = 0;
-    led_5.pwm = 0;
-    led_6.pwm = 0;
-    led_7.pwm = 0;
-    led_8.pwm = 0;
-    led_nose.pwm = 0;
-    led_left.pwm = 0;
-    led_right.pwm = 0;
+    SET_OFF(led_1);
+    SET_OFF(led_2);
+    SET_OFF(led_3);
+    SET_OFF(led_4);
+    SET_OFF(led_5);
+    SET_OFF(led_6);
+    SET_OFF(led_7);
+    SET_OFF(led_8);
 }
 
 /**
@@ -218,261 +290,21 @@ void all_off(){
  */
 void sequence()
 {
-    led_t* leds_right[] = {&led_4, &led_6, &led_5};
-    led_t* leds_left[] = {&led_3, &led_7, &led_8};
+    // First will be the trail on the leds around
+    led_t* first_sequence[] = {&led_3, &led_5, &led_7, &led_4, &led_6, &led_8, &led_1, &led_2};
+    
+    for (int i = 0; i < LEDS_COUNT; i++)
+    {
+        SET_ON(*first_sequence[i]);
+        delay_ms(250);
+    }
 
-    uint8_t pivot = 0;
-    int8_t direction = 1, pivot_nose_eyes = 0;
-
-    uint32_t last_time_eyes = millis() ,last_time_feet = millis(), last_time_nose = millis(), last_time_light_feet = millis(); 
-
-    leds_left[0]->pwm = 1000;
-    leds_right[0]->pwm = 1000;
-
-    uint16_t value_foot = 0;
-
+    delay_ms(1000);
+    
     all_off();
 
-    // ======================== At this point the leds around need to start growing thier values ======================
+    // Second sequence 
 
-    last_time_light_feet = millis();
-
-    while(value_foot < 200){
-        uint32_t current_time = millis();
-
-        if(current_time - last_time_light_feet > 100){
-            value_foot += 5;
-            last_time_light_feet = current_time;
-        }
-
-        if(current_time - last_time_feet > 150 ){
-
-            for(uint8_t i = 0; i<3; i++){
-                leds_left[i]->pwm = 0;
-                leds_right[i]->pwm = 0;
-            }
-
-            pivot+=direction;
-
-            leds_left[pivot]->pwm = value_foot;
-            leds_right[pivot]->pwm = value_foot;
-
-            if(pivot == 0) direction = 1;
-            if(pivot == 2) direction = -1;
-
-            last_time_feet = current_time;
-        }
-    }
-
-    // ======================== Start growing the values of the eyes on the spider ======================
-
-    last_time_eyes = millis();
-
-    while(led_1.pwm < 500)
-    {
-        uint32_t current_time = millis();
-
-        if(current_time - last_time_eyes > 50 ){
-            led_1.pwm += 10;
-            last_time_eyes = current_time;
-        }
-
-        if(current_time - last_time_feet > 150 ){
-
-            for(uint8_t i = 0; i<3; i++){
-                leds_left[i]->pwm = 0;
-                leds_right[i]->pwm = 0;
-            }
-
-            pivot+=direction;
-
-            leds_left[pivot]->pwm = value_foot;
-            leds_right[pivot]->pwm = value_foot;
-
-            if(pivot == 0) direction = 1;
-            if(pivot == 2) direction = -1;
-
-            last_time_feet = current_time;
-        }
-    }
-
-    // ======================== Start iluminating the eyes and nose for the skull ======================
-    
-    last_time_nose = millis();
-
-    while(led_nose.pwm < 1000)
-    {
-        uint32_t current_time = millis();
-
-        if(current_time - last_time_nose > 25 ){
-            led_nose.pwm += 10;
-            last_time_nose = current_time;
-        }
-
-        if(current_time - last_time_feet > 150 ){
-
-            for(uint8_t i = 0; i<3; i++){
-                leds_left[i]->pwm = 0;
-                leds_right[i]->pwm = 0;
-            }
-
-            pivot+=direction;
-
-            leds_left[pivot]->pwm = value_foot;
-            leds_right[pivot]->pwm = value_foot;
-
-            if(pivot == 0) direction = 1;
-            if(pivot == 2) direction = -1;
-
-            last_time_feet = current_time;
-        }
-    }
-
-    // ======================== A time fade in out ======================
-
-    last_time_eyes = millis();
-
-    while(true){
-        if(led_nose.pwm == 1000) pivot_nose_eyes = -20;
-        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
-
-        uint32_t current_time = millis();
-
-        if(current_time - last_time_nose > 10){
-            led_nose.pwm += pivot_nose_eyes;
-            last_time_nose = current_time;
-        }
-
-        if(current_time - last_time_feet > 150 ){
-
-            for(uint8_t i = 0; i<3; i++){
-                leds_left[i]->pwm = 0;
-                leds_right[i]->pwm = 0;
-            }
-
-            pivot+=direction;
-
-            leds_left[pivot]->pwm = value_foot;
-            leds_right[pivot]->pwm = value_foot;
-
-            if(pivot == 0) direction = 1;
-            if(pivot == 2) direction = -1;
-
-            last_time_feet = current_time;
-        }
-
-        if(current_time - last_time_eyes > 20000){
-            break;
-        }
-    }
-
-    // ======================== Start going down the eyes of the spider ======================
-
-    last_time_light_feet = millis();
-
-    while(value_foot != 0){
-        uint32_t current_time = millis();
-
-        if(led_nose.pwm == 1000) pivot_nose_eyes = -20;
-        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
-
-        if(current_time - last_time_light_feet > 100){
-            value_foot -= 5;
-            last_time_light_feet = current_time;
-        }
-
-        if(current_time - last_time_feet > 150 ){
-
-            for(uint8_t i = 0; i<3; i++){
-                leds_left[i]->pwm = 0;
-                leds_right[i]->pwm = 0;
-            }
-
-            pivot+=direction;
-
-            leds_left[pivot]->pwm = value_foot;
-            leds_right[pivot]->pwm = value_foot;
-
-            if(pivot == 0) direction = 1;
-            if(pivot == 2) direction = -1;
-
-            last_time_feet = current_time;
-        }
-    
-        if(current_time - last_time_nose > 10){
-            led_nose.pwm += pivot_nose_eyes;
-            last_time_nose = current_time;
-        }
-    }
-
-    leds_left[pivot]->pwm = value_foot;
-    leds_right[pivot]->pwm = value_foot;
-
-    // ======================== start turning off the lights ======================
-
-    last_time_eyes = millis();
-
-    while (led_1.pwm != 0)
-    {
-        uint32_t current_time = millis();
-
-        if(led_nose.pwm == 1000) pivot_nose_eyes = -20;
-        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
-        
-        if(current_time - last_time_eyes > 50){
-            led_1.pwm -= 25;
-            last_time_eyes = current_time;
-        }
-
-        if(current_time - last_time_nose > 10){
-            led_nose.pwm += pivot_nose_eyes;
-            last_time_nose = current_time;
-        }
-    }
-    
-    // ======================== play a little with the eyes and the nose ======================
-
-    last_time_eyes = millis();
-
-    while(true){
-        if(led_nose.pwm == 1000) pivot_nose_eyes = -20;
-        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
-
-        uint32_t current_time = millis();
-
-        if(current_time - last_time_nose > 10){
-            led_nose.pwm += pivot_nose_eyes;
-            last_time_nose = current_time;
-        }
-
-        if(current_time - last_time_eyes > 5000){
-            break;
-        }
-    }
-
-    while(led_nose.pwm < 1000){
-        if(led_nose.pwm == 20) pivot_nose_eyes = 20;
-
-        uint32_t current_time = millis();
-
-        if(current_time - last_time_nose > 10){
-            led_nose.pwm += pivot_nose_eyes;
-            last_time_nose = current_time;
-        }
-    }
-
-    // ========================== fade down =================================================
-
-    while(led_nose.pwm != 0){
-        uint32_t current_time = millis();
-
-        if(current_time - last_time_nose > 100){
-            led_nose.pwm -= 20;
-            last_time_nose = current_time;
-        }
-    }
-    
-    delay_ms(1000);
 }
 
 /**
@@ -483,10 +315,12 @@ int main()
 
 	InitAddon(); // Init All functions
 
+    all_off(); // Turn all leds off
+
     delay_ms(100);
 
 	while(1)
 	{
-        sequence();
+        sequence(); // Run the sequence
 	}
 }
