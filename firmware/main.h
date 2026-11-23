@@ -24,7 +24,7 @@ typedef struct {
 
 
 // Set off
-#define SET_OFF(led) led.pwm = 0;
+#define SET_OFF(led) (led).pwm = 0;
 
 // Set on
-#define SET_ON(led) led.pwm = 100;
+#define SET_ON(led) (led).pwm = 100;

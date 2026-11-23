@@ -291,7 +291,8 @@ void all_off(){
 void sequence()
 {
     // First will be the trail on the leds around
-    led_t* first_sequence[] = {&led_3, &led_5, &led_7, &led_4, &led_6, &led_8, &led_1, &led_2};
+    
+    led_t *first_sequence[] = {&led_3, &led_5, &led_7, &led_4, &led_6, &led_8, &led_1, &led_2};
     
     for (int i = 0; i < LEDS_COUNT; i++)
     {
@@ -302,9 +303,12 @@ void sequence()
     delay_ms(1000);
     
     all_off();
+    
 
     // Second sequence 
+    
 
+    
 }
 
 /**
