@@ -69,6 +69,7 @@ void TIM1_UP_IRQHandler(void)
 
         funDigitalWrite(led_1.led, counter<led_1.pwm);
         funDigitalWrite(led_2.led, counter<led_1.pwm);
+
         funDigitalWrite(led_3.led, counter<led_3.pwm);
         funDigitalWrite(led_4.led, counter<led_4.pwm);
         funDigitalWrite(led_5.led, counter<led_5.pwm);
@@ -285,29 +286,244 @@ void all_off(){
     SET_OFF(led_8);
 }
 
-/**
- *  Squence
+/** 
+ * Set all leds pwm value 
  */
-void sequence()
+void set_all_pwm(uint16_t pwm)
+{
+    SET_PWM(led_1, pwm);
+    SET_PWM(led_2, pwm);
+    SET_PWM(led_3, pwm);
+    SET_PWM(led_4, pwm);
+    SET_PWM(led_5, pwm);
+    SET_PWM(led_6, pwm);
+    SET_PWM(led_7, pwm);
+    SET_PWM(led_8, pwm);
+
+    delay_ms(10);
+}
+
+/**
+ * First leds sequence
+ */
+void first_sequence(void)
 {
     // First will be the trail on the leds around
+    led_t *leds_trail[] = {&led_3, &led_5, &led_7, &led_4, &led_6, &led_8, &led_1, &led_2};
     
-    led_t *first_sequence[] = {&led_3, &led_5, &led_7, &led_4, &led_6, &led_8, &led_1, &led_2};
-    
-    for (int i = 0; i < LEDS_COUNT; i++)
+    for (int i = 0; i < LEDS_COUNT-2; i++)
     {
-        SET_ON(*first_sequence[i]);
-        delay_ms(250);
+        SET_ON(*leds_trail[i]);
+        delay_ms(500);
+    }
+
+    // Fade in the eyes
+    for(int i = 0; i < 1000; i+=10)
+    {
+        SET_PWM(led_1, i);
+        SET_PWM(led_2, i);
+        delay_ms(10);
+    }
+
+    // A delay
+    delay_ms(2000);
+
+    // Turning off the rest of the leds
+    for(int i = LEDS_COUNT-1; i > 0; i--)
+    {
+        SET_OFF(*leds_trail[i-1]);
+        delay_ms(500);
+    }
+
+    // Fade out the eyes
+    for(int i = 1010; i > 0; i-=10)
+    {
+        SET_PWM(led_1, i-10);
+        SET_PWM(led_2, i-10);
+        delay_ms(10);
     }
 
     delay_ms(1000);
     
     all_off();
-    
+}
 
-    // Second sequence 
-    
+/**
+ * Second leds sequence
+ */
+void second_sequence(void)
+{
+    led_t *leds_trail[] = {&led_3, &led_5, &led_7, &led_4, &led_6, &led_8, &led_1, &led_2};
 
+    uint16_t value_feet = 0;
+    uint8_t pivot_feet = 0;
+    int8_t direction_eyes = 1;
+
+    uint32_t last_time = millis();
+    uint32_t last_time_light_feet = millis();
+
+    // Here start to fade in all the leds around the feet
+    while(value_feet <200)
+    {
+        uint32_t current_time = millis();
+
+        if(current_time - last_time > 100){
+            value_feet += 5;
+            last_time = current_time;
+        }
+
+        if(current_time - last_time_light_feet > 100){
+            for(int i = 0; i < 6; i++)
+            {
+                SET_PWM(*leds_trail[pivot_feet], 0);
+            }
+            
+            pivot_feet += direction_eyes;
+
+            SET_PWM(*leds_trail[pivot_feet], value_feet);
+            SET_PWM(*leds_trail[pivot_feet+3], value_feet);
+
+            last_time_light_feet = current_time;
+
+            if(pivot_feet == 0) direction_eyes = 1;
+            if(pivot_feet == 2) direction_eyes = -1;
+        }
+            
+    }
+ 
+    uint16_t value_eyes = 0;
+    uint32_t last_time_light_eyes = millis();
+
+    // Here start to fade in the eyes
+    while(value_eyes <= 500)
+    {
+        uint32_t current_time = millis();
+
+        // For the feet =====================================
+        if(current_time - last_time_light_feet > 150)
+        {
+            for(int i = 0; i < 6; i++)
+            {
+                SET_PWM(*leds_trail[pivot_feet], 0);
+            }
+            
+            pivot_feet += direction_eyes;
+
+            SET_PWM(*leds_trail[pivot_feet], value_feet);
+            SET_PWM(*leds_trail[pivot_feet+3], value_feet);
+
+            last_time_light_feet = current_time;
+
+            if(pivot_feet == 0) direction_eyes = 1;
+            if(pivot_feet == 2) direction_eyes = -1;
+        }
+
+        // For the eyes =====================================
+        if(current_time - last_time_light_eyes > 50)
+        {
+            SET_PWM(led_1, value_eyes);
+            SET_PWM(led_2, value_eyes);
+
+            value_eyes += 10;   
+        }
+    }
+
+    uint32_t timer_sequence = millis();
+    
+    // Stay for a time
+    while(millis() - timer_sequence < 2000)
+    {
+        uint32_t current_time = millis();
+
+        if(current_time - last_time_light_feet > 150)
+        {
+            for(int i = 0; i < 6; i++)
+            {
+                SET_PWM(*leds_trail[pivot_feet], 0);
+            }
+            
+            pivot_feet += direction_eyes;
+
+            SET_PWM(*leds_trail[pivot_feet], value_feet);
+            SET_PWM(*leds_trail[pivot_feet+3], value_feet);
+
+            last_time_light_feet = current_time;
+
+            if(pivot_feet == 0) direction_eyes = 1;
+            if(pivot_feet == 2) direction_eyes = -1;
+        }
+    }
+
+    // Start a fade down the feet
+    while(value_feet != 0)
+    {
+        uint32_t current_time = millis();
+
+        if(current_time - last_time > 100){
+            value_feet -= 5;
+            last_time = current_time;
+        }
+
+        if(current_time - last_time_light_feet > 100){
+            for(int i = 0; i < 6; i++)
+            {
+                SET_PWM(*leds_trail[pivot_feet], 0);
+            }
+            
+            pivot_feet += direction_eyes;
+
+            SET_PWM(*leds_trail[pivot_feet], value_feet);
+            SET_PWM(*leds_trail[pivot_feet+3], value_feet);
+
+            last_time_light_feet = current_time;
+
+            if(pivot_feet == 0) direction_eyes = 1;
+            if(pivot_feet == 2) direction_eyes = -1;
+        }
+    }
+
+    // Start fade down the eyes
+    while(value_eyes > 10)
+    {
+
+        if(millis() - last_time_light_eyes > 50)
+        {
+            SET_PWM(led_1, value_eyes-10);
+            SET_PWM(led_2, value_eyes-10);
+
+            value_eyes -= 10;   
+        }
+    }
+
+
+    all_off();
+
+    delay_ms(2000);
+    
+}
+
+
+/** 
+ * Helper sequence
+ */
+void lighting_sequence(void)
+{
+    
+}
+
+/**
+ * Third leds sequence
+ */
+void third_sequence(void)
+{
+    
+}
+
+/**
+ *  Squence
+ */
+void sequence()
+{
     
 }
 
