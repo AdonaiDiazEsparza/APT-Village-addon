@@ -318,7 +318,7 @@ void first_sequence(void)
     }
 
     // Fade in the eyes
-    for(int i = 0; i < 1000; i+=10)
+    for(int i = 0; i < 990; i+=10)
     {
         SET_PWM(led_1, i);
         SET_PWM(led_2, i);
@@ -329,7 +329,7 @@ void first_sequence(void)
     delay_ms(2000);
 
     // Turning off the rest of the leds
-    for(int i = LEDS_COUNT-1; i > 0; i--)
+    for(int i = LEDS_COUNT-2; i > 0; i--)
     {
         SET_OFF(*leds_trail[i-1]);
         delay_ms(500);
@@ -343,7 +343,7 @@ void first_sequence(void)
         delay_ms(10);
     }
 
-    delay_ms(1000);
+    delay_ms(1500);
     
     all_off();
 }
@@ -355,6 +355,9 @@ void second_sequence(void)
 {
     led_t *leds_trail[] = {&led_3, &led_5, &led_7, &led_4, &led_6, &led_8, &led_1, &led_2};
 
+    led_t *leds_right[] = {&led_3, &led_5, &led_7};
+    led_t *leds_left[] = {&led_4, &led_6, &led_8};
+    
     uint16_t value_feet = 0;
     uint8_t pivot_feet = 0;
     int8_t direction_eyes = 1;
@@ -375,13 +378,13 @@ void second_sequence(void)
         if(current_time - last_time_light_feet > 100){
             for(int i = 0; i < 6; i++)
             {
-                SET_PWM(*leds_trail[pivot_feet], 0);
+                SET_PWM(*leds_trail[i], 0);
             }
             
             pivot_feet += direction_eyes;
 
-            SET_PWM(*leds_trail[pivot_feet], value_feet);
-            SET_PWM(*leds_trail[pivot_feet+3], value_feet);
+            SET_PWM(*leds_left[pivot_feet], value_feet);
+            SET_PWM(*leds_right[pivot_feet], value_feet);
 
             last_time_light_feet = current_time;
 
@@ -390,7 +393,8 @@ void second_sequence(void)
         }
             
     }
- 
+    
+    
     uint16_t value_eyes = 0;
     uint32_t last_time_light_eyes = millis();
 
@@ -404,13 +408,13 @@ void second_sequence(void)
         {
             for(int i = 0; i < 6; i++)
             {
-                SET_PWM(*leds_trail[pivot_feet], 0);
+                SET_PWM(*leds_trail[i], 0);
             }
             
             pivot_feet += direction_eyes;
 
-            SET_PWM(*leds_trail[pivot_feet], value_feet);
-            SET_PWM(*leds_trail[pivot_feet+3], value_feet);
+            SET_PWM(*leds_left[pivot_feet], value_feet);
+            SET_PWM(*leds_right[pivot_feet], value_feet);
 
             last_time_light_feet = current_time;
 
@@ -425,6 +429,8 @@ void second_sequence(void)
             SET_PWM(led_2, value_eyes);
 
             value_eyes += 10;   
+
+            last_time_light_eyes = current_time;
         }
     }
 
@@ -439,13 +445,13 @@ void second_sequence(void)
         {
             for(int i = 0; i < 6; i++)
             {
-                SET_PWM(*leds_trail[pivot_feet], 0);
+                SET_PWM(*leds_trail[i], 0);
             }
             
             pivot_feet += direction_eyes;
 
-            SET_PWM(*leds_trail[pivot_feet], value_feet);
-            SET_PWM(*leds_trail[pivot_feet+3], value_feet);
+            SET_PWM(*leds_left[pivot_feet], value_feet);
+            SET_PWM(*leds_right[pivot_feet], value_feet);
 
             last_time_light_feet = current_time;
 
@@ -459,21 +465,18 @@ void second_sequence(void)
     {
         uint32_t current_time = millis();
 
-        if(current_time - last_time > 100){
-            value_feet -= 5;
-            last_time = current_time;
-        }
-
         if(current_time - last_time_light_feet > 100){
             for(int i = 0; i < 6; i++)
             {
-                SET_PWM(*leds_trail[pivot_feet], 0);
+                SET_PWM(*leds_trail[i], 0);
             }
+
+            value_feet -= 5;
             
             pivot_feet += direction_eyes;
 
-            SET_PWM(*leds_trail[pivot_feet], value_feet);
-            SET_PWM(*leds_trail[pivot_feet+3], value_feet);
+            SET_PWM(*leds_left[pivot_feet], value_feet);
+            SET_PWM(*leds_right[pivot_feet], value_feet);
 
             last_time_light_feet = current_time;
 
@@ -492,39 +495,181 @@ void second_sequence(void)
             SET_PWM(led_2, value_eyes-10);
 
             value_eyes -= 10;   
+
+            last_time_light_eyes = millis();
         }
     }
 
-
     all_off();
 
-    delay_ms(2000);
+    delay_ms(1500);
     
 }
 
-
-/** 
- * Helper sequence
- */
-void lighting_sequence(void)
-{
-    
-}
 
 /**
  * Third leds sequence
  */
 void third_sequence(void)
 {
-    
+    // Multiple blinks    
+    for(int i = 0; i<5; i++)
+    {
+        for(int j = 0; j<260; j+=5)
+        {
+            set_all_pwm(j);
+            delay_ms(15);
+        }
+
+        for(int j = 260; j>0; j-=5)
+        {
+            set_all_pwm(j-5);
+            delay_ms(15);
+        }
+    }
+
+    all_off();
+
+    delay_ms(1000);
 }
+
+
+/**
+ * Fourth leds sequence
+ */
+void fourth_sequence(void)
+{
+    // Multiple blinks
+    led_t *leds_trail[] = {&led_3, &led_5, &led_7, &led_4, &led_6, &led_8, &led_1, &led_2};
+    
+
+    uint16_t value_eyes = 0;
+
+    uint32_t last_time_light_eyes = millis();
+
+    uint32_t last_time_light_leds = millis();
+
+    uint8_t pivot = 0;
+    uint8_t pivot2 = 5;
+
+    int8_t direction_eyes = 1;
+
+    for(int i = 0; i < 10; i++)
+    {
+        while(value_eyes <= 500)
+        {
+            uint32_t current_time = millis();
+
+            // Fade in the eyes
+            if(current_time - last_time_light_eyes > 50)
+            {
+                SET_PWM(led_1, value_eyes);
+                SET_PWM(led_2, value_eyes);
+
+                value_eyes += 10;
+
+                last_time_light_eyes = current_time;
+            }
+
+            // lighting the leds around the eyes
+            if(current_time - last_time_light_leds > 200)
+            {
+                for(int j = 0; j < 6; j++)
+                {
+                    SET_PWM(*leds_trail[j], 0);
+                }
+
+                pivot += direction_eyes;
+                pivot2 -= direction_eyes;
+
+                if(pivot == 2 || pivot == 0) direction_eyes = -direction_eyes;
+
+                
+                SET_PWM(*leds_trail[pivot], 200);
+                SET_PWM(*leds_trail[pivot2], 200);
+
+                last_time_light_leds = current_time;
+
+            }
+
+        }
+
+        while(value_eyes > 0)
+        {
+            uint32_t current_time = millis();
+
+            // Fade in the eyes
+            if(current_time - last_time_light_eyes > 50)
+            {
+                SET_PWM(led_1, value_eyes);
+                SET_PWM(led_2, value_eyes);
+
+                value_eyes -= 10;
+
+                last_time_light_eyes = current_time;
+            }
+
+            // lighting the leds around the eyes
+            if(current_time - last_time_light_leds > 200)
+            {
+                for(int j = 0; j < 6; j++)
+                {
+                    SET_PWM(*leds_trail[j], 0);
+                }
+
+                pivot += direction_eyes;
+                pivot2 -= direction_eyes;
+
+                if(pivot == 2 || pivot == 0) direction_eyes = -direction_eyes;
+
+                
+                SET_PWM(*leds_trail[pivot], 200);
+                SET_PWM(*leds_trail[pivot2], 200);
+
+                last_time_light_leds = current_time;
+            }
+
+        }
+    }
+
+    all_off();
+
+    delay_ms(1500);
+}
+
+/** 
+ * Fifth leds sequence
+ */
+void fifth_sequence(void)
+{
+    for(int i = 0; i < 610; i+=10)
+    {
+        set_all_pwm(i);
+        delay_ms(15);
+    }
+
+    // Slower fade out 
+    for(int i = 610; i > 0; i-=10)
+    {
+        set_all_pwm(i-10);
+        delay_ms(60);
+    }
+
+    all_off();
+}
+
 
 /**
  *  Squence
  */
 void sequence()
 {
-    
+    first_sequence();
+    second_sequence();
+    third_sequence();
+    fourth_sequence();
+    fifth_sequence();
+    all_off();
 }
 
 /**

@@ -1,4 +1,4 @@
-all : build
+all : build flash
 
 TARGET:=main
 TARGET_MCU?=CH32V003
