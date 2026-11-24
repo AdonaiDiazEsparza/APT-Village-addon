@@ -1,5 +1,11 @@
 #include "main.h"
 
+#if defined(__has_include)
+#  if __has_include("flag.h")
+#    include "flag.h"
+#  endif
+#endif
+
 /**
  * Define the structs for the leds
  */

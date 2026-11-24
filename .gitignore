@@ -8,3 +8,6 @@
 *.elf
 *.zip
 /hardware/FabOuts/*
+
+# Ignore flag
+firmware/flag.h
